@@ -23,10 +23,18 @@
             <div class="loading">Adatok betöltése...</div>
         </main>
 
-        <!-- Időkép style horizontal daily cards -->
-        <section class="weekly-forecast-section">
-            <h2>Előrejelzés a következő napokra</h2>
-            <div id="weeklyScroll" class="weekly-scroll">
+        <!-- 36-hour Hourly Section (Horizontal, no scrollbar) -->
+        <section class="section-box">
+            <h2>Következő 36 óra (óránkénti)</h2>
+            <div class="horizontal-scroll" id="hourlyScroll">
+                <!-- JS fills this -->
+            </div>
+        </section>
+
+        <!-- Extended Daily Section (Horizontal, no scrollbar) -->
+        <section class="section-box">
+            <h2>Hosszútávú előrejelzés (napok)</h2>
+            <div class="horizontal-scroll" id="dailyScroll">
                 <!-- JS fills this -->
             </div>
         </section>

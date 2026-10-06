@@ -14,10 +14,12 @@ document.getElementById("cityInput").addEventListener("keypress", (e) => {
 
 async function fetchWeatherData(cityName) {
     const mainCard = document.getElementById("weatherMain");
-    const weeklyScroll = document.getElementById("weeklyScroll");
+    const hourlyScroll = document.getElementById("hourlyScroll");
+    const dailyScroll = document.getElementById("dailyScroll");
     
     mainCard.innerHTML = `<div class="loading">Keresés és adatok letöltése...</div>`;
-    weeklyScroll.innerHTML = "";
+    hourlyScroll.innerHTML = "";
+    dailyScroll.innerHTML = "";
 
     try {
         const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=hu&format=json`);
@@ -30,7 +32,7 @@ async function fetchWeatherData(cityName) {
 
         const { latitude, longitude, name, country } = geoData.results[0];
 
-        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&hourly=precipitation_probability,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`);
+        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`);
         const weatherData = await weatherRes.json();
 
         displayWeather(name, country, weatherData);
@@ -41,16 +43,15 @@ async function fetchWeatherData(cityName) {
 }
 
 function getWeatherInfo(code) {
-    // Visszaadja a szöveget és az ikont
     const map = {
-        0: { text: "Tiszta idő", icon: "☀️" },
+        0: { text: "Tiszta", icon: "☀️" },
         1: { text: "Főként tiszta", icon: "🌤️" },
         2: { text: "Változóan felhős", icon: "⛅" },
-        3: { text: "Borult ég", icon: "☁️" },
+        3: { text: "Borult", icon: "☁️" },
         51: { text: "Szitálás", icon: "🌧️" },
         61: { text: "Enyhe eső", icon: "🌧️" },
         63: { text: "Mérsékelt eső", icon: "🌧️" },
-        65: { text: "Intenzív esőzés", icon: "⛈️" },
+        65: { text: "Intenzív eső", icon: "⛈️" },
         71: { text: "Hóesés", icon: "🌨️" },
         95: { text: "Zivatar", icon: "⚡" }
     };
@@ -58,8 +59,6 @@ function getWeatherInfo(code) {
 }
 
 function getHumanReadableRainText(probability, precipitation, cityName) {
-    // Pontos magyarázat a területi lefedettségről, ahogy kérted:
-    // Pl. 69% azt jelenti, hogy a város 69%-án esni fog, 31% eséllyel megússzák szárazon.
     let dryChance = 100 - probability;
     if (dryChance < 0) dryChance = 0;
 
@@ -71,7 +70,8 @@ function getHumanReadableRainText(probability, precipitation, cityName) {
 
 function displayWeather(cityName, country, data) {
     const mainCard = document.getElementById("weatherMain");
-    const weeklyScroll = document.getElementById("weeklyScroll");
+    const hourlyScroll = document.getElementById("hourlyScroll");
+    const dailyScroll = document.getElementById("dailyScroll");
     
     const current = data.current;
     const currentHourProb = data.hourly.precipitation_probability[0] || 0;
@@ -87,10 +87,32 @@ function displayWeather(cityName, country, data) {
         </div>
     `;
 
-    // Heti kártyák feltöltése (Időkép stílusú vízszintes sáv)
-    const daily = data.daily;
-    let cardsHtml = '';
+    // 1. Következő 36 óra (vízszintes kártyák, láthatatlan csúszka)
+    let hourlyHtml = '';
+    for (let i = 0; i < 36; i++) {
+        if (!data.hourly.time[i]) break;
 
+        const dateObj = new Date(data.hourly.time[i]);
+        const timeStr = dateObj.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' });
+        const dayLabel = i === 0 ? "Ma" : (dateObj.getHours() === 0 ? dateObj.toLocaleDateString('hu-HU', {month:'short', day:'numeric'}) : timeStr);
+        const temp = Math.round(data.hourly.temperature_2m[i]);
+        const prob = data.hourly.precipitation_probability[i];
+        const info = getWeatherInfo(data.hourly.weather_code[i]);
+
+        hourlyHtml += `
+            <div class="forecast-card">
+                <div class="card-time">${dayLabel}<br><span style="font-size:0.8rem">${dateObj.getHours() === 0 ? timeStr : ''}</span></div>
+                <div class="card-icon">${info.icon}</div>
+                <div class="card-temp">${temp}°C</div>
+                <div class="card-rain">💧 ${prob}%</div>
+            </div>
+        `;
+    }
+    hourlyScroll.innerHTML = hourlyHtml;
+
+    // 2. Napi / Hosszútávú (vízszintes kártyák, láthatatlan csúszka)
+    let dailyHtml = '';
+    const daily = data.daily;
     for (let i = 0; i < daily.time.length; i++) {
         const dateObj = new Date(daily.time[i]);
         const dayName = i === 0 ? "Ma" : dateObj.toLocaleDateString('hu-HU', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -99,21 +121,19 @@ function displayWeather(cityName, country, data) {
         const dayInfo = getWeatherInfo(daily.weather_code[i]);
         const rainProb = daily.precipitation_probability_max ? daily.precipitation_probability_max[i] : 0;
 
-        cardsHtml += `
-            <div class="day-card">
-                <div class="day-name">${dayName}</div>
-                <div class="day-icon">${dayInfo.icon}</div>
-                <div class="day-temps">
-                    <span class="temp-max">▲ ${maxTemp}°C</span>
+        dailyHtml += `
+            <div class="forecast-card" style="min-width: 95px;">
+                <div class="card-time">${dayName}</div>
+                <div class="card-icon">${dayInfo.icon}</div>
+                <div style="font-size: 0.85rem; margin: 4px 0;">
+                    <span class="temp-max">▲ ${maxTemp}°C</span><br>
                     <span class="temp-min">▼ ${minTemp}°C</span>
                 </div>
-                <div class="day-rain">💧 ${rainProb}%</div>
+                <div class="card-rain">💧 ${rainProb}%</div>
             </div>
         `;
     }
-
-    weeklyScroll.innerHTML = cardsHtml;
+    dailyScroll.innerHTML = dailyHtml;
 }
 
-// Kezdő lekérdezés indításkor
 fetchWeatherData(defaultCity);

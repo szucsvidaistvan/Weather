@@ -96,84 +96,78 @@ body {
     line-height: 1.4;
 }
 
-.weekly-forecast-section h2 {
-    font-size: 1.1rem;
-    margin-bottom: 10px;
-    color: #cbd5e1;
-    padding-left: 4px;
+.section-box {
+    background: #1e293b;
+    padding: 16px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
-.weekly-scroll {
+.section-box h2 {
+    font-size: 1.05rem;
+    margin-bottom: 12px;
+    color: #cbd5e1;
+}
+
+/* Horizontal scroll container with scrollbar completely hidden */
+.horizontal-scroll {
     display: flex;
     gap: 10px;
     overflow-x: auto;
-    padding-bottom: 8px;
+    padding-bottom: 4px;
     scroll-snap-type: x mandatory;
+    scrollbar-width: none; /* Firefox */
 }
 
-.weekly-scroll::-webkit-scrollbar {
-    height: 6px;
+.horizontal-scroll::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
 }
 
-.weekly-scroll::-webkit-scrollbar-thumb {
-    background: #334155;
-    border-radius: 3px;
-}
-
-.day-card {
-    background: #1e293b;
-    min-width: 95px;
-    padding: 14px 10px;
+.forecast-card {
+    background: #0f172a;
+    min-width: 85px;
+    padding: 12px 8px;
     border-radius: 12px;
     text-align: center;
     scroll-snap-align: start;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    border: 1px solid #334155;
 }
 
-.day-name {
-    font-size: 0.9rem;
-    font-weight: bold;
+.card-time {
+    font-size: 0.85rem;
     color: #94a3b8;
+    font-weight: bold;
     margin-bottom: 6px;
 }
 
-.day-icon {
-    font-size: 1.8rem;
+.card-icon {
+    font-size: 1.6rem;
+    margin: 4px 0;
+}
+
+.card-temp {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #f8fafc;
     margin: 6px 0;
 }
 
-.day-temps {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin: 8px 0;
+.card-rain {
+    font-size: 0.75rem;
+    color: #38bdf8;
 }
 
 .temp-max {
-    background: #ef4444;
-    color: white;
-    padding: 3px 6px;
-    border-radius: 6px;
-    font-size: 0.85rem;
+    color: #f87171;
     font-weight: bold;
 }
 
 .temp-min {
-    background: #3b82f6;
-    color: white;
-    padding: 3px 6px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    font-weight: bold;
-}
-
-.day-rain {
-    font-size: 0.8rem;
-    color: #38bdf8;
-    margin-top: 4px;
+    color: #60a5fa;
 }
 
 .loading {
