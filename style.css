@@ -15,7 +15,7 @@ body {
 
 .container {
     width: 100%;
-    max-width: 480px;
+    max-width: 520px;
 }
 
 header {
@@ -112,4 +112,27 @@ button:active {
 .loading {
     color: #6b7280;
     padding: 40px;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.weather-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+.weather-table th, .weather-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.weather-table th {
+    background-color: #f9fafb;
+    color: #374151;
+    font-weight: 600;
 }

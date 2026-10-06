@@ -27,13 +27,14 @@ async function fetchWeatherData(cityName) {
 
         const { latitude, longitude, name, country } = geoData.results[0];
 
-        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&hourly=precipitation_probability,precipitation&timezone=auto`);
+        // Lekérjük a napi maximum/minimum hőmérsékletet és napi csapadék valószínűséget is (daily)
+        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&hourly=precipitation_probability,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`);
         const weatherData = await weatherRes.json();
 
         displayWeather(name, country, weatherData);
     } catch (error) {
         console.error(error);
-        card.innerHTML = `<p style="color: red;">Hiba történt az adatok betöltése közben.</p>`;
+        card.innerHTML = `<p style="color: red;">Hiba történt az adatok betöltése közben (Network error / API issue).</p>`;
     }
 }
 
@@ -79,14 +80,57 @@ function displayWeather(cityName, country, data) {
     const weatherText = getWeatherDescription(current.weather_code);
     const humanText = getHumanReadableRainText(currentHourProb, current.precipitation);
 
+    // Heti előrejelzés adatok feldolgozása
+    const daily = data.daily;
+    let tableRows = '';
+    
+    for (let i = 0; i < daily.time.length; i++) {
+        const dateObj = new Date(daily.time[i]);
+        const dayName = dateObj.toLocaleDateString('hu-HU', { weekday: 'short', month: 'short', day: 'numeric' });
+        const maxTemp = Math.round(daily.temperature_2m_max[i]);
+        const minTemp = Math.round(daily.temperature_2m_min[i]);
+        const desc = getWeatherDescription(daily.weather_code[i]);
+        const rainProb = daily.precipitation_probability_max ? daily.precipitation_probability_max[i] : 0;
+
+        tableRows += `
+            <tr>
+                <td><strong>${dayName}</strong></td>
+                <td>${desc}</td>
+                <td style="color: #2563eb; font-weight: bold;">${maxTemp}°C</td>
+                <td style="color: #6b7280;">${minTemp}°C</td>
+                <td>💧 ${rainProb}%</td>
+            </tr>
+        `;
+    }
+
     card.innerHTML = `
         <div class="city-title">${cityName} <span style="font-size: 1rem; color: #6b7280;">(${country})</span></div>
         <div class="temp">${Math.round(current.temperature_2m)}°C</div>
         <div class="description">${weatherText} (Páratartalom: ${current.relative_humidity_2m}%)</div>
         
         <div class="human-forecast">
-            <h3>Részletes helyzetkép:</h3>
+            <h3>Részletes helyzetkép (most):</h3>
             <p>${humanText}</p>
+        </div>
+
+        <div class="weekly-section">
+            <h3 style="margin: 20px 0 10px 0; font-size: 1.1rem; color: #111827; text-align: left;">Heti hőmérsékleti és előrejelzési táblázat:</h3>
+            <div class="table-responsive">
+                <table class="weather-table">
+                    <thead>
+                        <tr>
+                            <th>Nap</th>
+                            <th>Időjárás</th>
+                            <th>Max</th>
+                            <th>Min</th>
+                            <th>Eső esély</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+            </div>
         </div>
     `;
 }
