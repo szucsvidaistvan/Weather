@@ -6,21 +6,30 @@
     <title>Pontos Időjárás PWA</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2563eb">
+    <meta name="theme-color" content="#1e293b">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Időjárás Jelző</h1>
-            <div class="search-box">
-                <input type="text" id="cityInput" placeholder="Város keresése (pl. Debrecen)...">
-                <button id="searchBtn">Keresés</button>
+    <div class="app-container">
+        <!-- Top bar: Location switcher -->
+        <header class="app-header">
+            <div class="location-box">
+                <input type="text" id="cityInput" placeholder="Város (pl. Debrecen)..." value="Debrecen">
+                <button id="searchBtn">Váltás</button>
             </div>
         </header>
 
-        <main id="weatherCard" class="weather-card">
+        <!-- Main Current Weather -->
+        <main id="weatherMain" class="weather-main">
             <div class="loading">Adatok betöltése...</div>
         </main>
+
+        <!-- Időkép style horizontal daily cards -->
+        <section class="weekly-forecast-section">
+            <h2>Előrejelzés a következő napokra</h2>
+            <div id="weeklyScroll" class="weekly-scroll">
+                <!-- JS fills this -->
+            </div>
+        </section>
     </div>
 
     <script src="app.js"></script>

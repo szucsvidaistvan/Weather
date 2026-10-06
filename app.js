@@ -13,126 +13,107 @@ document.getElementById("cityInput").addEventListener("keypress", (e) => {
 });
 
 async function fetchWeatherData(cityName) {
-    const card = document.getElementById("weatherCard");
-    card.innerHTML = `<div class="loading">Keresés és adatok letöltése...</div>`;
+    const mainCard = document.getElementById("weatherMain");
+    const weeklyScroll = document.getElementById("weeklyScroll");
+    
+    mainCard.innerHTML = `<div class="loading">Keresés és adatok letöltése...</div>`;
+    weeklyScroll.innerHTML = "";
 
     try {
         const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=hu&format=json`);
         const geoData = await geoRes.json();
 
         if (!geoData.results || geoData.results.length === 0) {
-            card.innerHTML = `<p style="color: red;">A megadott város nem található!</p>`;
+            mainCard.innerHTML = `<p style="color: #ef4444;">A megadott város nem található!</p>`;
             return;
         }
 
         const { latitude, longitude, name, country } = geoData.results[0];
 
-        // Lekérjük a napi maximum/minimum hőmérsékletet és napi csapadék valószínűséget is (daily)
         const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&hourly=precipitation_probability,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`);
         const weatherData = await weatherRes.json();
 
         displayWeather(name, country, weatherData);
     } catch (error) {
         console.error(error);
-        card.innerHTML = `<p style="color: red;">Hiba történt az adatok betöltése közben (Network error / API issue).</p>`;
+        mainCard.innerHTML = `<p style="color: #ef4444;">Hiba történt az adatok letöltése közben.</p>`;
     }
 }
 
-function getWeatherDescription(code) {
-    const codes = {
-        0: "Tiszta idő",
-        1: "Főként tiszta",
-        2: "Változóan felhős",
-        3: "Borult ég",
-        51: "Gyenge szitálás",
-        61: "Enyhe eső",
-        63: "Mérsékelt eső",
-        65: "Intenzív esőzés",
-        71: "Enyhe hóesés",
-        95: "Zivatar"
+function getWeatherInfo(code) {
+    // Visszaadja a szöveget és az ikont
+    const map = {
+        0: { text: "Tiszta idő", icon: "☀️" },
+        1: { text: "Főként tiszta", icon: "🌤️" },
+        2: { text: "Változóan felhős", icon: "⛅" },
+        3: { text: "Borult ég", icon: "☁️" },
+        51: { text: "Szitálás", icon: "🌧️" },
+        61: { text: "Enyhe eső", icon: "🌧️" },
+        63: { text: "Mérsékelt eső", icon: "🌧️" },
+        65: { text: "Intenzív esőzés", icon: "⛈️" },
+        71: { text: "Hóesés", icon: "🌨️" },
+        95: { text: "Zivatar", icon: "⚡" }
     };
-    return codes[code] || "Változékony idő";
+    return map[code] || { text: "Változékony", icon: "⛅" };
 }
 
-function getHumanReadableRainText(probability, precipitation) {
-    let areaCoverage = "";
-    if (probability < 20) {
-        return "Csekély az esély a csapadékra, a város teljes területén száraz idő várható.";
-    } else if (probability >= 20 && probability < 50) {
-        areaCoverage = "A város kisebb körzeteiben (körülbelül 20-30%-án)";
-    } else if (probability >= 50 && probability < 80) {
-        areaCoverage = "A város nagyobb részén (körülbelül 50-70%-án)";
-    } else {
-        areaCoverage = "A város szinte egész területén (több mint 80%-án)";
-    }
+function getHumanReadableRainText(probability, precipitation, cityName) {
+    // Pontos magyarázat a területi lefedettségről, ahogy kérted:
+    // Pl. 69% azt jelenti, hogy a város 69%-án esni fog, 31% eséllyel megússzák szárazon.
+    let dryChance = 100 - probability;
+    if (dryChance < 0) dryChance = 0;
 
     let intensityText = precipitation > 2 ? "kiadósabb, áztató jellegű" : "szitáló, szemerkélő";
-    if (precipitation > 5) intensityText = "zivataros, felhőszakadás jellegű";
+    if (precipitation > 5) intensityText = "zivataros, felhőszakadalmas";
 
-    return `${areaCoverage} kell esőre számítani. Valószínűsége **${probability}%**, a jellegét tekintve ${intensityText} csapadék várható.`;
+    return `<strong>Csapadék területi eloszlás:</strong> A modellek szerint ${cityName} területének <strong>${probability}%</strong>-án várható eső, míg a maradék <strong>${dryChance}%</strong>-on nagy eséllyel száraz marad az idő. Ahol esik, ott ${intensityText} csapadékra kell számítani.`;
 }
 
 function displayWeather(cityName, country, data) {
-    const card = document.getElementById("weatherCard");
+    const mainCard = document.getElementById("weatherMain");
+    const weeklyScroll = document.getElementById("weeklyScroll");
+    
     const current = data.current;
     const currentHourProb = data.hourly.precipitation_probability[0] || 0;
-    
-    const weatherText = getWeatherDescription(current.weather_code);
-    const humanText = getHumanReadableRainText(currentHourProb, current.precipitation);
+    const currentWeatherInfo = getWeatherInfo(current.weather_code);
+    const humanText = getHumanReadableRainText(currentHourProb, current.precipitation, cityName);
 
-    // Heti előrejelzés adatok feldolgozása
+    mainCard.innerHTML = `
+        <div class="city-title">${cityName} <span style="font-size: 0.9rem; color: #94a3b8;">(${country})</span></div>
+        <div class="temp-big">${Math.round(current.temperature_2m)}°C</div>
+        <div class="desc-text">${currentWeatherInfo.icon} ${currentWeatherInfo.text} (Pára: ${current.relative_humidity_2m}%)</div>
+        <div class="human-box">
+            <p>${humanText}</p>
+        </div>
+    `;
+
+    // Heti kártyák feltöltése (Időkép stílusú vízszintes sáv)
     const daily = data.daily;
-    let tableRows = '';
-    
+    let cardsHtml = '';
+
     for (let i = 0; i < daily.time.length; i++) {
         const dateObj = new Date(daily.time[i]);
-        const dayName = dateObj.toLocaleDateString('hu-HU', { weekday: 'short', month: 'short', day: 'numeric' });
+        const dayName = i === 0 ? "Ma" : dateObj.toLocaleDateString('hu-HU', { weekday: 'short', month: 'short', day: 'numeric' });
         const maxTemp = Math.round(daily.temperature_2m_max[i]);
         const minTemp = Math.round(daily.temperature_2m_min[i]);
-        const desc = getWeatherDescription(daily.weather_code[i]);
+        const dayInfo = getWeatherInfo(daily.weather_code[i]);
         const rainProb = daily.precipitation_probability_max ? daily.precipitation_probability_max[i] : 0;
 
-        tableRows += `
-            <tr>
-                <td><strong>${dayName}</strong></td>
-                <td>${desc}</td>
-                <td style="color: #2563eb; font-weight: bold;">${maxTemp}°C</td>
-                <td style="color: #6b7280;">${minTemp}°C</td>
-                <td>💧 ${rainProb}%</td>
-            </tr>
+        cardsHtml += `
+            <div class="day-card">
+                <div class="day-name">${dayName}</div>
+                <div class="day-icon">${dayInfo.icon}</div>
+                <div class="day-temps">
+                    <span class="temp-max">▲ ${maxTemp}°C</span>
+                    <span class="temp-min">▼ ${minTemp}°C</span>
+                </div>
+                <div class="day-rain">💧 ${rainProb}%</div>
+            </div>
         `;
     }
 
-    card.innerHTML = `
-        <div class="city-title">${cityName} <span style="font-size: 1rem; color: #6b7280;">(${country})</span></div>
-        <div class="temp">${Math.round(current.temperature_2m)}°C</div>
-        <div class="description">${weatherText} (Páratartalom: ${current.relative_humidity_2m}%)</div>
-        
-        <div class="human-forecast">
-            <h3>Részletes helyzetkép (most):</h3>
-            <p>${humanText}</p>
-        </div>
-
-        <div class="weekly-section">
-            <h3 style="margin: 20px 0 10px 0; font-size: 1.1rem; color: #111827; text-align: left;">Heti hőmérsékleti és előrejelzési táblázat:</h3>
-            <div class="table-responsive">
-                <table class="weather-table">
-                    <thead>
-                        <tr>
-                            <th>Nap</th>
-                            <th>Időjárás</th>
-                            <th>Max</th>
-                            <th>Min</th>
-                            <th>Eső esély</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${tableRows}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    `;
+    weeklyScroll.innerHTML = cardsHtml;
 }
 
+// Kezdő lekérdezés indításkor
 fetchWeatherData(defaultCity);
