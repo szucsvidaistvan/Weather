@@ -1,4 +1,6 @@
 let currentCity = "Debrecen";
+let globalWeatherData = null;
+let heatmapMode = "temp"; // "temp" or "rain"
 
 document.getElementById("searchBtn").addEventListener("click", () => {
     const city = document.getElementById("cityInput").value.trim();
@@ -10,6 +12,14 @@ document.getElementById("searchBtn").addEventListener("click", () => {
 
 document.getElementById("refreshBtn").addEventListener("click", () => {
     fetchWeatherData(currentCity);
+});
+
+document.getElementById("heatmapToggleBtn").addEventListener("click", () => {
+    heatmapMode = heatmapMode === "temp" ? "rain" : "temp";
+    document.getElementById("heatmapToggleBtn").innerText = heatmapMode === "temp" ? "Csapadékra vált" : "Hőmérsékletre vált";
+    if (globalWeatherData) {
+        renderHeatmap(globalWeatherData);
+    }
 });
 
 document.getElementById("cityInput").addEventListener("keypress", (e) => {
@@ -61,12 +71,12 @@ async function fetchWeatherData(cityName) {
     const mainCard = document.getElementById("weatherMain");
     const hourlyScroll = document.getElementById("hourlyScroll");
     const dailyScroll = document.getElementById("dailyScroll");
-    const heatmapContainer = document.getElementById("heatmapContainer");
+    const heatmapWrapper = document.getElementById("heatmapWrapper");
     
     mainCard.innerHTML = `<div class="loading">Adatok frissítése...</div>`;
     hourlyScroll.innerHTML = "";
     dailyScroll.innerHTML = "";
-    heatmapContainer.innerHTML = "";
+    heatmapWrapper.innerHTML = "";
 
     try {
         const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=hu&format=json`);
@@ -79,11 +89,12 @@ async function fetchWeatherData(cityName) {
 
         const { latitude, longitude, name, country } = geoData.results[0];
 
-        // Fetching 16 days forecast + past days if available or extended forecast
-        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&past_days=10&timezone=auto`);
-        const weatherData = await weatherRes.json();
+        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&past_days=15&timezone=auto`);
+        globalWeatherData = await weatherRes.json();
+        globalWeatherData.cityName = name;
+        globalWeatherData.country = country;
 
-        displayWeather(name, country, weatherData);
+        displayWeather(globalWeatherData);
     } catch (error) {
         console.error(error);
         mainCard.innerHTML = `<p style="color: #ef4444;">Hiba történt az adatok letöltése közben.</p>`;
@@ -116,12 +127,13 @@ function getHumanReadableRainText(probability, precipitation, cityName) {
     return `<strong>Csapadék területi eloszlás:</strong> A modellek szerint ${cityName} területének <strong>${probability}%</strong>-án várható eső, míg a maradék <strong>${dryChance}%</strong>-on nagy eséllyel száraz marad az idő. Ahol esik, ott ${intensityText} csapadékra kell számítani.`;
 }
 
-function displayWeather(cityName, country, data) {
+function displayWeather(data) {
     const mainCard = document.getElementById("weatherMain");
     const hourlyScroll = document.getElementById("hourlyScroll");
     const dailyScroll = document.getElementById("dailyScroll");
-    const heatmapContainer = document.getElementById("heatmapContainer");
     
+    const cityName = data.cityName;
+    const country = data.country;
     const current = data.current;
     const currentHourProb = data.hourly.precipitation_probability[0] || 0;
     const currentWeatherInfo = getWeatherInfo(current.weather_code);
@@ -188,25 +200,50 @@ function displayWeather(cityName, country, data) {
     }
     dailyScroll.innerHTML = dailyHtml;
 
-    // 3. Havi Hőtérkép (Napi bontásban kb. 15-20 nap múlt/jövő ablakban)
-    let heatmapHtml = '';
+    renderHeatmap(data);
+}
+
+function renderHeatmap(data) {
+    const heatmapWrapper = document.getElementById("heatmapWrapper");
+    const daily = data.daily;
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    let gridHtml = '<div class="heatmap-grid">';
+    
     for (let i = 0; i < daily.time.length; i++) {
         const dateStr = daily.time[i];
-        const dateObj = new Date(dateStr);
         const isToday = dateStr === todayStr;
+        const dateObj = new Date(dateStr);
         const dayNum = dateObj.toLocaleDateString('hu-HU', { month: 'short', day: 'numeric' });
-        const maxTemp = Math.round(daily.temperature_2m_max[i]);
-        const info = getWeatherInfo(daily.weather_code[i]);
+        
+        let color = "#1e293b";
+        let title = "";
 
-        heatmapHtml += `
-            <div class="heatmap-cell ${isToday ? 'today' : ''}" title="${dayNum}: ${maxTemp}°C">
-                <div class="heatmap-date">${dayNum}</div>
-                <div style="font-size: 1.1rem; margin: 2px 0;">${info.icon}</div>
-                <div class="heatmap-temp">${maxTemp}°C</div>
-            </div>
+        if (heatmapMode === "temp") {
+            const temp = Math.round(daily.temperature_2m_max[i]);
+            title = `${dayNum}: ${temp}°C max`;
+            // Color scale for temp
+            if (temp < 0) color = "#0e4429";
+            else if (temp < 15) color = "#006d32";
+            else if (temp < 25) color = "#26a641";
+            else color = "#39d353";
+        } else {
+            const rainProb = daily.precipitation_probability_max ? daily.precipitation_probability_max[i] : 0;
+            title = `${dayNum}: ${rainProb}% eső esély`;
+            // Color scale for rain probability
+            if (rainProb < 20) color = "#1e293b";
+            else if (rainProb < 40) color = "#0e4429";
+            else if (rainProb < 70) color = "#006d32";
+            else color = "#39d353";
+        }
+
+        gridHtml += `
+            <div class="heatmap-square ${isToday ? 'today' : ''}" style="background-color: ${color};" title="${title}"></div>
         `;
     }
-    heatmapContainer.innerHTML = heatmapHtml;
+
+    gridHtml += '</div>';
+    heatmapWrapper.innerHTML = gridHtml;
 }
 
 fetchWeatherData(currentCity);

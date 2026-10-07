@@ -27,27 +27,37 @@
             <div class="loading">Adatok betöltése...</div>
         </main>
 
-        <!-- 36-hour Hourly Section (Horizontal, no scrollbar) -->
+        <!-- 36-hour Hourly Section -->
         <section class="section-box">
-            <h2>Következő 36 óra (óránkénti)</h2>
-            <div class="horizontal-scroll" id="hourlyScroll">
-                <!-- JS fills this -->
-            </div>
+            <h2>Következő 36 óra</h2>
+            <div class="horizontal-scroll" id="hourlyScroll"></div>
         </section>
 
-        <!-- Extended Daily Section (Horizontal, no scrollbar) -->
+        <!-- Extended Daily Section -->
         <section class="section-box">
-            <h2>Hosszútávú előrejelzés (napok)</h2>
-            <div class="horizontal-scroll" id="dailyScroll">
-                <!-- JS fills this -->
-            </div>
+            <h2>16 napos előrejelzés</h2>
+            <div class="horizontal-scroll" id="dailyScroll"></div>
         </section>
 
-        <!-- Monthly Heatmap Section -->
+        <!-- Heatmap Section with Toggle -->
         <section class="section-box">
-            <h2>Havi Hőtérkép (30 napos hőmérséklet & eső)</h2>
-            <div class="heatmap-container" id="heatmapContainer">
+            <div class="heatmap-header-row">
+                <h2>Időjárás Hőtérkép</h2>
+                <button id="heatmapToggleBtn" class="toggle-btn">Csapadékra vált</button>
+            </div>
+            <div class="heatmap-wrapper" id="heatmapWrapper">
                 <!-- JS fills this -->
+            </div>
+            <div class="heatmap-legend" id="heatmapLegend">
+                <span>Kevesebb</span>
+                <div class="legend-colors">
+                    <span class="l-box" style="background: #1e293b;"></span>
+                    <span class="l-box" style="background: #0e4429;"></span>
+                    <span class="l-box" style="background: #006d32;"></span>
+                    <span class="l-box" style="background: #26a641;"></span>
+                    <span class="l-box" style="background: #39d353;"></span>
+                </div>
+                <span>Több</span>
             </div>
         </section>
     </div>

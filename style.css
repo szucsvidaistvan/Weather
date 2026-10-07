@@ -14,7 +14,6 @@ body {
     overscroll-behavior-y: contain;
 }
 
-/* Pull-to-refresh indicator style */
 .pull-indicator {
     position: fixed;
     top: -40px;
@@ -124,15 +123,14 @@ body {
 
 .section-box h2 {
     font-size: 1.05rem;
-    margin-bottom: 12px;
     color: #cbd5e1;
 }
 
-/* Horizontal scroll container with scrollbar completely hidden */
 .horizontal-scroll {
     display: flex;
     gap: 10px;
     overflow-x: auto;
+    padding-top: 10px;
     padding-bottom: 4px;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
@@ -188,39 +186,72 @@ body {
     color: #60a5fa;
 }
 
-/* Heatmap Grid */
-.heatmap-container {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 6px;
+/* Heatmap Header & Toggle */
+.heatmap-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
 }
 
-.heatmap-cell {
-    background: #0f172a;
-    border-radius: 8px;
-    padding: 8px 4px;
-    text-align: center;
-    border: 1px solid #334155;
-    font-size: 0.75rem;
-    position: relative;
-}
-
-.heatmap-cell.today {
-    border: 2px solid #38bdf8;
-    box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
-}
-
-.heatmap-date {
-    color: #94a3b8;
-    margin-bottom: 2px;
-}
-
-.heatmap-temp {
+.toggle-btn {
+    background: #334155;
+    color: #38bdf8;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
     font-weight: bold;
-    color: #f8fafc;
+    cursor: pointer;
+}
+
+/* GitHub-style Contribution Heatmap Grid */
+.heatmap-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+    padding: 6px 0;
+}
+
+.heatmap-square {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    position: relative;
+    cursor: pointer;
+}
+
+.heatmap-square.today {
+    border: 2px solid #38bdf8;
+}
+
+.heatmap-legend {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 10px;
+    padding: 0 4px;
+}
+
+.legend-colors {
+    display: flex;
+    gap: 3px;
+}
+
+.l-box {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    display: inline-block;
 }
 
 .loading {
     color: #64748b;
     padding: 30px;
+    text-align: center;
 }
