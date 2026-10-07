@@ -9,12 +9,16 @@
     <meta name="theme-color" content="#1e293b">
 </head>
 <body>
+    <!-- Pull-to-refresh indicator -->
+    <div id="pullRefreshIndicator" class="pull-indicator">Frissítés...</div>
+
     <div class="app-container">
-        <!-- Top bar: Location switcher -->
+        <!-- Top bar: Location switcher & Refresh button -->
         <header class="app-header">
             <div class="location-box">
                 <input type="text" id="cityInput" placeholder="Város (pl. Debrecen)..." value="Debrecen">
                 <button id="searchBtn">Váltás</button>
+                <button id="refreshBtn" title="Frissítés" style="background: #334155; color: #38bdf8; border: none; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-weight: bold;">🔄</button>
             </div>
         </header>
 
@@ -35,6 +39,14 @@
         <section class="section-box">
             <h2>Hosszútávú előrejelzés (napok)</h2>
             <div class="horizontal-scroll" id="dailyScroll">
+                <!-- JS fills this -->
+            </div>
+        </section>
+
+        <!-- Monthly Heatmap Section -->
+        <section class="section-box">
+            <h2>Havi Hőtérkép (30 napos hőmérséklet & eső)</h2>
+            <div class="heatmap-container" id="heatmapContainer">
                 <!-- JS fills this -->
             </div>
         </section>

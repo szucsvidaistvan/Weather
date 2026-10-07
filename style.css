@@ -11,6 +11,24 @@ body {
     padding: 12px;
     display: flex;
     justify-content: center;
+    overscroll-behavior-y: contain;
+}
+
+/* Pull-to-refresh indicator style */
+.pull-indicator {
+    position: fixed;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #38bdf8;
+    color: #0f172a;
+    padding: 6px 16px;
+    border-radius: 0 0 12px 12px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    transition: top 0.2s ease;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
 }
 
 .app-container {
@@ -117,11 +135,11 @@ body {
     overflow-x: auto;
     padding-bottom: 4px;
     scroll-snap-type: x mandatory;
-    scrollbar-width: none; /* Firefox */
+    scrollbar-width: none;
 }
 
 .horizontal-scroll::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
+    display: none;
 }
 
 .forecast-card {
@@ -168,6 +186,38 @@ body {
 
 .temp-min {
     color: #60a5fa;
+}
+
+/* Heatmap Grid */
+.heatmap-container {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+}
+
+.heatmap-cell {
+    background: #0f172a;
+    border-radius: 8px;
+    padding: 8px 4px;
+    text-align: center;
+    border: 1px solid #334155;
+    font-size: 0.75rem;
+    position: relative;
+}
+
+.heatmap-cell.today {
+    border: 2px solid #38bdf8;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+}
+
+.heatmap-date {
+    color: #94a3b8;
+    margin-bottom: 2px;
+}
+
+.heatmap-temp {
+    font-weight: bold;
+    color: #f8fafc;
 }
 
 .loading {
