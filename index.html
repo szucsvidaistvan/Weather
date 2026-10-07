@@ -2,7 +2,7 @@
 <html lang="hu">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pontos Időjárás PWA</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
@@ -16,9 +16,9 @@
         <!-- Top bar: Location switcher & Refresh button -->
         <header class="app-header">
             <div class="location-box">
-                <input type="text" id="cityInput" placeholder="Város (pl. Debrecen)..." value="Debrecen">
+                <input type="text" id="cityInput" placeholder="Város..." value="Debrecen">
                 <button id="searchBtn">Váltás</button>
-                <button id="refreshBtn" title="Frissítés" style="background: #334155; color: #38bdf8; border: none; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-weight: bold;">🔄</button>
+                <button id="refreshBtn" title="Frissítés">🔄</button>
             </div>
         </header>
 
@@ -49,16 +49,13 @@
                 <!-- JS fills this -->
             </div>
             <div class="heatmap-legend" id="heatmapLegend">
-                <span>Kevesebb</span>
-                <div class="legend-colors">
-                    <span class="l-box" style="background: #1e293b;"></span>
-                    <span class="l-box" style="background: #0e4429;"></span>
-                    <span class="l-box" style="background: #006d32;"></span>
-                    <span class="l-box" style="background: #26a641;"></span>
-                    <span class="l-box" style="background: #39d353;"></span>
+                <span id="legendMinLabel">Hűvös</span>
+                <div class="legend-colors" id="legendColors">
+                    <!-- Dynamic legend colors -->
                 </div>
-                <span>Több</span>
+                <span id="legendMaxLabel">Meleg</span>
             </div>
+            <div id="heatmapDetail" class="heatmap-detail-box" style="display:none;"></div>
         </section>
     </div>
 

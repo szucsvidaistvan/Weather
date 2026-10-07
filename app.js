@@ -17,6 +17,28 @@ document.getElementById("refreshBtn").addEventListener("click", () => {
 document.getElementById("heatmapToggleBtn").addEventListener("click", () => {
     heatmapMode = heatmapMode === "temp" ? "rain" : "temp";
     document.getElementById("heatmapToggleBtn").innerText = heatmapMode === "temp" ? "Csapadékra vált" : "Hőmérsékletre vált";
+    
+    // Update legend labels
+    if (heatmapMode === "temp") {
+        document.getElementById("legendMinLabel").innerText = "Hideg (Kék)";
+        document.getElementById("legendMaxLabel").innerText = "Meleg (Piros)";
+        document.getElementById("legendColors").innerHTML = `
+            <span class="l-box" style="background: #3b82f6;"></span>
+            <span class="l-box" style="background: #93c5fd;"></span>
+            <span class="l-box" style="background: #fca5a5;"></span>
+            <span class="l-box" style="background: #ef4444;"></span>
+        `;
+    } else {
+        document.getElementById("legendMinLabel").innerText = "Száraz";
+        document.getElementById("legendMaxLabel").innerText = "Biztos eső";
+        document.getElementById("legendColors").innerHTML = `
+            <span class="l-box" style="background: #1e293b;"></span>
+            <span class="l-box" style="background: #1d4ed8;"></span>
+            <span class="l-box" style="background: #3b82f6;"></span>
+            <span class="l-box" style="background: #93c5fd;"></span>
+        `;
+    }
+
     if (globalWeatherData) {
         renderHeatmap(globalWeatherData);
     }
@@ -200,11 +222,20 @@ function displayWeather(data) {
     }
     dailyScroll.innerHTML = dailyHtml;
 
+    // Initialize legend colors for temp by default
+    document.getElementById("legendColors").innerHTML = `
+        <span class="l-box" style="background: #3b82f6;"></span>
+        <span class="l-box" style="background: #93c5fd;"></span>
+        <span class="l-box" style="background: #fca5a5;"></span>
+        <span class="l-box" style="background: #ef4444;"></span>
+    `;
+
     renderHeatmap(data);
 }
 
 function renderHeatmap(data) {
     const heatmapWrapper = document.getElementById("heatmapWrapper");
+    const detailBox = document.getElementById("heatmapDetail");
     const daily = data.daily;
     const todayStr = new Date().toISOString().split('T')[0];
 
@@ -217,33 +248,49 @@ function renderHeatmap(data) {
         const dayNum = dateObj.toLocaleDateString('hu-HU', { month: 'short', day: 'numeric' });
         
         let color = "#1e293b";
-        let title = "";
+        const maxTemp = Math.round(daily.temperature_2m_max[i]);
+        const minTemp = Math.round(daily.temperature_2m_min[i]);
+        const rainProb = daily.precipitation_probability_max ? daily.precipitation_probability_max[i] : 0;
 
         if (heatmapMode === "temp") {
-            const temp = Math.round(daily.temperature_2m_max[i]);
-            title = `${dayNum}: ${temp}°C max`;
-            // Color scale for temp
-            if (temp < 0) color = "#0e4429";
-            else if (temp < 15) color = "#006d32";
-            else if (temp < 25) color = "#26a641";
-            else color = "#39d353";
+            // Cold = blue, Warm = red
+            if (maxTemp < 0) color = "#1d4ed8";
+            else if (maxTemp < 12) color = "#3b82f6";
+            else if (maxTemp < 20) color = "#93c5fd";
+            else if (maxTemp < 28) color = "#fca5a5";
+            else color = "#ef4444";
         } else {
-            const rainProb = daily.precipitation_probability_max ? daily.precipitation_probability_max[i] : 0;
-            title = `${dayNum}: ${rainProb}% eső esély`;
-            // Color scale for rain probability
-            if (rainProb < 20) color = "#1e293b";
-            else if (rainProb < 40) color = "#0e4429";
-            else if (rainProb < 70) color = "#006d32";
-            else color = "#39d353";
+            // Rain probability: higher = deeper blue
+            if (rainProb < 15) color = "#1e293b";
+            else if (rainProb < 40) color = "#1d4ed8";
+            else if (rainProb < 75) color = "#3b82f6";
+            else color = "#60a5fa";
         }
 
         gridHtml += `
-            <div class="heatmap-square ${isToday ? 'today' : ''}" style="background-color: ${color};" title="${title}"></div>
+            <div class="heatmap-square ${isToday ? 'today' : ''}" style="background-color: ${color};" data-index="${i}"></div>
         `;
     }
 
     gridHtml += '</div>';
     heatmapWrapper.innerHTML = gridHtml;
+
+    // Add click listeners to tiles to show day details
+    const squares = heatmapWrapper.querySelectorAll(".heatmap-square");
+    squares.forEach(sq => {
+        sq.addEventListener("click", () => {
+            const idx = sq.getAttribute("data-index");
+            const dateStr = daily.time[idx];
+            const dateObj = new Date(dateStr);
+            const dayFormatted = dateObj.toLocaleDateString('hu-HU', { month: 'long', day: 'numeric', weekday: 'short' });
+            const maxT = Math.round(daily.temperature_2m_max[idx]);
+            const minT = Math.round(daily.temperature_2m_min[idx]);
+            const rProb = daily.precipitation_probability_max ? daily.precipitation_probability_max[idx] : 0;
+
+            detailBox.style.display = "block";
+            detailBox.innerHTML = `<strong>${dayFormatted}</strong><br>▲ Max: ${maxT}°C | ▼ Min: ${minT}°C | 💧 Eső esély: ${rProb}%`;
+        });
+    });
 }
 
 fetchWeatherData(currentCity);

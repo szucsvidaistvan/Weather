@@ -3,6 +3,7 @@
     margin: 0;
     padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    touch-action: manipulation;
 }
 
 body {
@@ -46,14 +47,16 @@ body {
 .location-box {
     display: flex;
     gap: 8px;
+    align-items: center;
 }
 
 .location-box input {
     flex: 1;
+    min-width: 0;
     background: #0f172a;
     border: 1px solid #334155;
     color: white;
-    padding: 10px 14px;
+    padding: 10px 12px;
     border-radius: 8px;
     font-size: 1rem;
     outline: none;
@@ -67,10 +70,21 @@ body {
     background: #38bdf8;
     color: #0f172a;
     border: none;
-    padding: 10px 16px;
+    padding: 10px 14px;
     border-radius: 8px;
     font-weight: 700;
     cursor: pointer;
+    white-space: nowrap;
+}
+
+#refreshBtn {
+    background: #334155;
+    color: #38bdf8;
+    border: none;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
 }
 
 .weather-main {
@@ -225,7 +239,7 @@ body {
 }
 
 .heatmap-square.today {
-    border: 2px solid #38bdf8;
+    border: 2px solid #f8fafc;
 }
 
 .heatmap-legend {
@@ -248,6 +262,17 @@ body {
     height: 12px;
     border-radius: 2px;
     display: inline-block;
+}
+
+.heatmap-detail-box {
+    margin-top: 12px;
+    background: #0f172a;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    font-size: 0.9rem;
+    color: #f8fafc;
+    text-align: center;
 }
 
 .loading {
