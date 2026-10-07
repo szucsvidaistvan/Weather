@@ -229,8 +229,8 @@ body {
 }
 
 .heatmap-square {
-    width: 16px;
-    height: 16px;
+    width: 26px;
+    height: 26px;
     border-radius: 3px;
     background: #1e293b;
     border: 1px solid #334155;
