@@ -200,7 +200,6 @@ body {
     color: #60a5fa;
 }
 
-/* Heatmap Header & Toggle */
 .heatmap-header-row {
     display: flex;
     justify-content: space-between;
@@ -219,19 +218,18 @@ body {
     cursor: pointer;
 }
 
-/* GitHub-style Contribution Heatmap Grid */
 .heatmap-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 6px;
     justify-content: center;
     padding: 6px 0;
 }
 
 .heatmap-square {
-    width: 26px;
-    height: 26px;
-    border-radius: 3px;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
     background: #1e293b;
     border: 1px solid #334155;
     position: relative;
@@ -258,9 +256,9 @@ body {
 }
 
 .l-box {
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
     display: inline-block;
 }
 
