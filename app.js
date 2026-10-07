@@ -1,6 +1,6 @@
 let currentCity = "Debrecen";
 let globalWeatherData = null;
-let heatmapMode = "temp"; // "temp" or "rain"
+let heatmapMode = "temp";
 
 document.getElementById("searchBtn").addEventListener("click", () => {
     const city = document.getElementById("cityInput").value.trim();
@@ -18,7 +18,6 @@ document.getElementById("heatmapToggleBtn").addEventListener("click", () => {
     heatmapMode = heatmapMode === "temp" ? "rain" : "temp";
     document.getElementById("heatmapToggleBtn").innerText = heatmapMode === "temp" ? "Csapadékra vált" : "Hőmérsékletre vált";
     
-    // Update legend labels
     if (heatmapMode === "temp") {
         document.getElementById("legendMinLabel").innerText = "Hideg (Kék)";
         document.getElementById("legendMaxLabel").innerText = "Meleg (Piros)";
@@ -54,7 +53,6 @@ document.getElementById("cityInput").addEventListener("keypress", (e) => {
     }
 });
 
-// Pull to refresh implementation
 let touchStartY = 0;
 const pullIndicator = document.getElementById("pullRefreshIndicator");
 
@@ -111,7 +109,7 @@ async function fetchWeatherData(cityName) {
 
         const { latitude, longitude, name, country } = geoData.results[0];
 
-        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&past_days=15&timezone=auto`);
+        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`);
         globalWeatherData = await weatherRes.json();
         globalWeatherData.cityName = name;
         globalWeatherData.country = country;
@@ -157,7 +155,17 @@ function displayWeather(data) {
     const cityName = data.cityName;
     const country = data.country;
     const current = data.current;
-    const currentHourProb = data.hourly.precipitation_probability[0] || 0;
+    
+    const nowIso = new Date().toISOString().slice(0, 13);
+    let startIndex = 0;
+    for (let i = 0; i < data.hourly.time.length; i++) {
+        if (data.hourly.time[i].startsWith(nowIso)) {
+            startIndex = i;
+            break;
+        }
+    }
+
+    const currentHourProb = data.hourly.precipitation_probability[startIndex] || 0;
     const currentWeatherInfo = getWeatherInfo(current.weather_code);
     const humanText = getHumanReadableRainText(currentHourProb, current.precipitation, cityName);
 
@@ -170,14 +178,13 @@ function displayWeather(data) {
         </div>
     `;
 
-    // 1. Következő 36 óra
     let hourlyHtml = '';
-    for (let i = 0; i < 36; i++) {
+    for (let i = startIndex; i < startIndex + 36; i++) {
         if (!data.hourly.time[i]) break;
 
         const dateObj = new Date(data.hourly.time[i]);
         const timeStr = dateObj.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' });
-        const dayLabel = i === 0 ? "Ma" : (dateObj.getHours() === 0 ? dateObj.toLocaleDateString('hu-HU', {month:'short', day:'numeric'}) : timeStr);
+        const dayLabel = (i === startIndex) ? "Ma" : (dateObj.getHours() === 0 ? dateObj.toLocaleDateString('hu-HU', {month:'short', day:'numeric'}) : timeStr);
         const temp = Math.round(data.hourly.temperature_2m[i]);
         const prob = data.hourly.precipitation_probability[i];
         const info = getWeatherInfo(data.hourly.weather_code[i]);
@@ -193,7 +200,6 @@ function displayWeather(data) {
     }
     hourlyScroll.innerHTML = hourlyHtml;
 
-    // 2. Napi / Hosszútávú
     let dailyHtml = '';
     const daily = data.daily;
     const todayStr = new Date().toISOString().split('T')[0];
@@ -222,7 +228,6 @@ function displayWeather(data) {
     }
     dailyScroll.innerHTML = dailyHtml;
 
-    // Initialize legend colors for temp by default
     document.getElementById("legendColors").innerHTML = `
         <span class="l-box" style="background: #3b82f6;"></span>
         <span class="l-box" style="background: #93c5fd;"></span>
@@ -244,23 +249,18 @@ function renderHeatmap(data) {
     for (let i = 0; i < daily.time.length; i++) {
         const dateStr = daily.time[i];
         const isToday = dateStr === todayStr;
-        const dateObj = new Date(dateStr);
-        const dayNum = dateObj.toLocaleDateString('hu-HU', { month: 'short', day: 'numeric' });
         
         let color = "#1e293b";
         const maxTemp = Math.round(daily.temperature_2m_max[i]);
-        const minTemp = Math.round(daily.temperature_2m_min[i]);
         const rainProb = daily.precipitation_probability_max ? daily.precipitation_probability_max[i] : 0;
 
         if (heatmapMode === "temp") {
-            // Cold = blue, Warm = red
             if (maxTemp < 0) color = "#1d4ed8";
             else if (maxTemp < 12) color = "#3b82f6";
             else if (maxTemp < 20) color = "#93c5fd";
             else if (maxTemp < 28) color = "#fca5a5";
             else color = "#ef4444";
         } else {
-            // Rain probability: higher = deeper blue
             if (rainProb < 15) color = "#1e293b";
             else if (rainProb < 40) color = "#1d4ed8";
             else if (rainProb < 75) color = "#3b82f6";
@@ -275,7 +275,6 @@ function renderHeatmap(data) {
     gridHtml += '</div>';
     heatmapWrapper.innerHTML = gridHtml;
 
-    // Add click listeners to tiles to show day details
     const squares = heatmapWrapper.querySelectorAll(".heatmap-square");
     squares.forEach(sq => {
         sq.addEventListener("click", () => {
